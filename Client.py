@@ -20,12 +20,21 @@ def TCP_connection(message, serverAddress, team_name):
     clientSocket = socket(AF_INET, SOCK_STREAM)
     clientSocket.connect(('', serverPort))
     clientSocket.send(team_name.encode('utf-8'))
-    modifiedSentence = clientSocket.recv(1024)
+    while True: # receive welcome message
+        open_game_massage = clientSocket.recv(1024).decode()
+        if open_game_massage:
+            print(open_game_massage)
+            break
+    # GAME!
+    while True: # read and then write to socket
+        stop_mssage = clientSocket.recv(1024).decode()
+        if stop_mssage:
+            print(stop_mssage)
+            break
+        clientSocket.send(getch.getche().encode())
+        print()
 
-    
     clientSocket.close()
-    # GAME
-
 
 while True:
     message, serverAddress = UDP_connection()

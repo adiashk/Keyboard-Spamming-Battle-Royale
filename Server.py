@@ -1,5 +1,6 @@
 from socket import *
 import threading
+import _thread
 import time
 from collections import defaultdict 
 
@@ -8,16 +9,18 @@ serverSocket_UDP = socket(AF_INET, SOCK_DGRAM)
 serverSocket_UDP.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
 serverSocket_UDP.setsockopt(SOL_SOCKET, SO_BROADCAST, 1)
 
-serverSocket_TCP = socket(AF_INET,SOCK_STREAM)
-serverSocket_TCP.bind(('',serverPort))
-serverSocket_TCP.listen(1)
+serverSocket_TCP_Master = socket(AF_INET,SOCK_STREAM)
+serverSocket_TCP_Master.bind(('',serverPort))
+serverSocket_TCP_Master.listen(1)
 
-clients_group1 = defaultdict(int)
-clients_group2 = defaultdict(int)
+clients_group1 = defaultdict(list)
+clients_group2 = defaultdict(list)
 groups_counter = 0
+stop_game = False
 
 def start_server():
     print("Server started, listening on IP address 172.1.0.4")
+    stop_game = False
     start_time = time.time()
     while time.time() - start_time < 10:
         offer_UDP_connection()
@@ -26,24 +29,54 @@ def start_server():
 
 def offer_UDP_connection():
     message = "0xfeedbeef" + "0x2" + "12000"
-    threading.Timer(1.0, print_offers).start()
+    threading.Timer(1.0, offer_UDP_connection).start()
     serverSocket_UDP.sendto(message.encode('utf-8'), ('', serverPort))
     TCP_connection()
 
 
 def TCP_connection():
-    connectionSocket, addr = serverSocket_TCP.accept()
-    team_name = connectionSocket.recv(1024)
+    connection_socket, client_addr = serverSocket_TCP_Master.accept()
+    team_name = connection_socket.recv(1024)
     groups_counter += 1
     if groups_counter % 2 == 1:
-        clients_group1[team_name] = 0
+        clients_group1[team_name].append(0, connection_socket, client_addr) # score=0
     elif
-        clients_group2[team_name] = 0
+        clients_group2[team_name].append(0, connection_socket, client_addr) # score=0
 
 def game():
     print_game_start()
-    message = "Start pressing keys on your keyboard as fast as you can!!"
-    
+    open_game_massage = "Start pressing keys on your keyboard as fast as you can!!"
+    for team_name, client in clients_group1.items():  # (score, connection_socket, client_addr)
+        connection_socket = client[1]
+        client_addr = client[2]
+        connection_socket.send(open_game_massage.encode('utf-8'))
+        _thread.start_new_thread(game_of_client, (team_name, 1, connection_socket, client_addr))
+        
+    for team_name, client in clients_group2.items():  # (score, connection_socket, client_addr)
+        connection_socket = client[1]
+        client_addr = client[2]
+        connection_socket.send(open_game_massage.encode('utf-8'))
+        _thread.start_new_thread ( game_of_client, (team_name, 2, connection_socket, client_addr))
+
+    time.sleep(10)
+    stop_game = True
+    print("Game over!")
+    score1, score2 = calculate_score()
+    if score1 > score2:
+        g = 1
+    else
+        g = 2
+    print("Group 1 typed in ", score1, " characters. Group 2 typed in ", score2,
+    " characters.Group ", g ," wins!")
+    print("Congratulations to the winners:")
+    print("==")
+    if g == 1:
+        for name in clients_group1.keys():
+            print(name)
+    else:
+        for name in clients_group2.keys():
+            print(name)
+    print("Game over, sending out offer requests...")
 
 def print_game_start():
     print("Welcome to Keyboard Spamming Battle Royale.")
@@ -55,11 +88,29 @@ def print_game_start():
     print("==")
     for name in clients_group2.keys():
         print(name)
-    
 
+def game_of_client(team_name, group_num, connection_socket, client_addr):
+    while not stop_game:
+        key = connection_socket.recv(1)
+        if group_num == 1:
+            clients_group1[team_name][0] += 1
+        elif group_num == 2:
+            clients_group2[team_name][0] += 1
+    print("Server disconnected, listening for offer requests...")
+    connection_socket.close()
 
-start_server()
+def calculate_score():
+    score1, score2 = 0
+    for team_name, client in clients_group1.items():  # (score, connection_socket, client_addr)
+        score1 += client[0]
+    for team_name, client in clients_group2.items()
+        score2 += client[0]
+    return score1, score2
 
+while True:
+    start_server()
+serverSocket_UDP.close()
+serverSocket_TCP_Master.close()
 
 # magic_cookie = 0xfeedbeef
 # message_type= 0x2
