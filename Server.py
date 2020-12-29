@@ -6,7 +6,7 @@ from collections import defaultdict
 import struct
 serverPort = 13117
 serverSocket_UDP = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)
-# serverSocket_UDP.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+serverSocket_UDP.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
 serverSocket_UDP.setsockopt(SOL_SOCKET, SO_BROADCAST, 1)
 
 serverSocket_TCP_Master = socket(AF_INET,SOCK_STREAM)
