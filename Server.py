@@ -3,10 +3,10 @@ import threading
 import _thread
 import time
 from collections import defaultdict 
-
+import struct
 serverPort = 13117
-serverSocket_UDP = socket(AF_INET, SOCK_DGRAM)
-serverSocket_UDP.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+serverSocket_UDP = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)
+# serverSocket_UDP.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
 serverSocket_UDP.setsockopt(SOL_SOCKET, SO_BROADCAST, 1)
 
 serverSocket_TCP_Master = socket(AF_INET,SOCK_STREAM)
@@ -17,7 +17,7 @@ clients_group1 = defaultdict(list)
 clients_group2 = defaultdict(list)
 groups_counter = 0
 stop_game = False
-
+server_tcp_port = 12000
 def start_server():
     print("Server started, listening on IP address 172.1.0.4")
     stop_game = False
@@ -28,9 +28,10 @@ def start_server():
 
 
 def offer_UDP_connection():
-    message = "0xfeedbeef" + "0x2" + "12000"
+    # message = "0xfeedbeef" + "0x2" + "12000"
+    message = struct.pack('QQQ',0xfeedbeef ,0x2, server_tcp_port)
     threading.Timer(1.0, offer_UDP_connection).start()
-    serverSocket_UDP.sendto(message.encode('utf-8'), ('', serverPort))
+    serverSocket_UDP.sendto(message, ('<broadcast>', serverPort))
     TCP_connection()
 
 
@@ -40,7 +41,7 @@ def TCP_connection():
     groups_counter += 1
     if groups_counter % 2 == 1:
         clients_group1[team_name].append(0, connection_socket, client_addr) # score=0
-    elif
+    else:
         clients_group2[team_name].append(0, connection_socket, client_addr) # score=0
 
 def game():
@@ -64,7 +65,7 @@ def game():
     score1, score2 = calculate_score()
     if score1 > score2:
         g = 1
-    else
+    else:
         g = 2
     print("Group 1 typed in ", score1, " characters. Group 2 typed in ", score2,
     " characters.Group ", g ," wins!")
@@ -103,12 +104,12 @@ def calculate_score():
     score1, score2 = 0
     for team_name, client in clients_group1.items():  # (score, connection_socket, client_addr)
         score1 += client[0]
-    for team_name, client in clients_group2.items()
+    for team_name, client in clients_group2.items():
         score2 += client[0]
     return score1, score2
 
-while True:
-    start_server()
+print("start")
+start_server()
 serverSocket_UDP.close()
 serverSocket_TCP_Master.close()
 
