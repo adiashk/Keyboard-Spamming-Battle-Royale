@@ -4,7 +4,7 @@ team_name = "yuval_adi"
 
 def UDP_connection():    
     print ("Client started, listening for offer requests...")
-    serverPort = 13117
+    serverPort = 13001
     clientSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)
     clientSocket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
     clientSocket.setsockopt(SOL_SOCKET, SO_BROADCAST, 1)
@@ -14,13 +14,13 @@ def UDP_connection():
     return message, serverAddress
 
 def TCP_connection(message, serverAddress, team_name):
-    print("Received offer from ", serverAddress, " attempting to connect...")
+    (ip, port) = serverAddress
+    print("Received offer from ", ip, " attempting to connect...")
     # serverPort = message[13:].decode('utf-8')
-    (ip, port)= serverAddress
     message_content = struct.unpack('QQQ', message)
     serverPort = message_content[2]
     clientSocket = socket(AF_INET, SOCK_STREAM)
-    clientSocket.bind((ip, serverPort))
+    clientSocket.connect((ip, serverPort))
     clientSocket.send(team_name.encode('utf-8'))
     while True: # receive welcome message
         open_game_massage = clientSocket.recv(1024).decode()
