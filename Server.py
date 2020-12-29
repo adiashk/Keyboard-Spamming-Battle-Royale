@@ -4,7 +4,7 @@ import _thread
 import time
 from collections import defaultdict 
 import struct
-serverPort = 13001
+serverPort = 13003
 serverSocket_UDP = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)
 serverSocket_UDP.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
 serverSocket_UDP.setsockopt(SOL_SOCKET, SO_BROADCAST, 1)
@@ -13,12 +13,14 @@ serverSocket_TCP_Master = socket(AF_INET, SOCK_STREAM)
 ip = gethostbyname(gethostname())
 print(ip)
 serverSocket_TCP_Master.bind((ip,serverPort))
+serverSocket_TCP_Master.listen(5)
+
 
 clients_group1 = defaultdict(list)
 clients_group2 = defaultdict(list)
 groups_counter = 0
 stop_game = False
-server_tcp_port = 12000
+server_tcp_port = 12001
 def start_server():
     print("Server started, listening on IP address 172.1.0.4")
     stop_game = False
@@ -37,7 +39,6 @@ def offer_UDP_connection():
 
 
 def TCP_connection():
-    serverSocket_TCP_Master.listen(1)
     connection_socket, client_addr = serverSocket_TCP_Master.accept()
     team_name = connection_socket.recv(1024)
     groups_counter += 1
