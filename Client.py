@@ -14,7 +14,7 @@ def UDP_connection():
         try:
             message, serverAddress = clientSocket.recvfrom(1024)    
             unpacked_message = struct.unpack('QQQ', message)    
-            print(str(unpacked_message[0])) 
+            # print(str(unpacked_message[0]))
             if unpacked_message[0] == 4276993775:   
                 clientSocket.close()    
                 server_tcp_port = unpacked_message[2]
@@ -47,7 +47,6 @@ def TCP_connection(ip, server_tcp_port):
             if stop_message == "true":
                 # print(stop_message)
                 break
-
 
         # except:
             # char = getch.getche()

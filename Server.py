@@ -12,8 +12,6 @@ serverSocket_UDP = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)
 serverSocket_UDP.setsockopt(SOL_SOCKET, SO_BROADCAST, 1)
 
 serverSocket_TCP_Master = socket(AF_INET, SOCK_STREAM)
-# ip = gethostbyname(gethostname())
-# print(ip)
 # server_ip = get_if_addr('eth1')
 # server_ip = '127.0.0.1'
 server_ip = gethostbyname(gethostname())
@@ -56,7 +54,7 @@ def TCP_connection(start_time):
         connection_socket, client_addr = serverSocket_TCP_Master.accept()
         # print(connection_socket)
 
-        team_name = connection_socket.recv(1024)
+        team_name = connection_socket.recv(1024).decode('utf-8')
         if len(clients_group1) == len(clients_group2):
             clients_group1[team_name] = [0, connection_socket, client_addr] # score=0
         else:
