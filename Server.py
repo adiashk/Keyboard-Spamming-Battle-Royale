@@ -4,9 +4,9 @@ import _thread
 import time
 from collections import defaultdict 
 import struct
-# from scapy.arch import get_if_addr
-serverPort = 13006
-server_tcp_port = 12000
+from scapy.arch import get_if_addr
+serverPort = 13117
+server_tcp_port = 2094
 serverSocket_UDP = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)
 # serverSocket_UDP.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
 serverSocket_UDP.setsockopt(SOL_SOCKET, SO_BROADCAST, 1)
@@ -14,9 +14,9 @@ serverSocket_UDP.setsockopt(SOL_SOCKET, SO_BROADCAST, 1)
 serverSocket_TCP_Master = socket(AF_INET, SOCK_STREAM)
 # ip = gethostbyname(gethostname())
 # print(ip)
-# server_ip = get_if_addr('eth1')
+server_ip = get_if_addr('eth1')
 # server_ip = '127.0.0.1'
-server_ip = gethostbyname(gethostname())
+# server_ip = gethostbyname(gethostname())
 
 serverSocket_TCP_Master.bind((server_ip,server_tcp_port))
 
@@ -47,6 +47,7 @@ def offer_UDP_connection(start_time):
     while time.time() - start_time < 20:
         message = struct.pack('QQQ',0xfeedbeef ,0x2, server_tcp_port)
         # threading.Timer(1.0, offer_UDP_connection).start()
+        # serverSocket_UDP.sendto(message, ('<broadcast>', serverPort))
         serverSocket_UDP.sendto(message, ('<broadcast>', serverPort))
         time.sleep(1)
 
@@ -111,7 +112,8 @@ def print_game_start():
 
 def game_of_client(team_name, group_num, connection_socket, client_addr):
     while not stop_game:
-        key = connection_socket.recv(1024)
+        key = connection_socket.recv(1)
+        print(key)
         if group_num == 1:
             clients_group1[team_name][0] += 1
         elif group_num == 2:
