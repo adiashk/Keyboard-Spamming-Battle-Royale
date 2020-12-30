@@ -1,6 +1,6 @@
 from socket import *
-serverName = 'hostname'
-serverPort = 12004
+serverName = ''
+serverPort = 12005
 clientSocket = socket(AF_INET, SOCK_DGRAM)
 message = input("Input lowercase sentence:")
 clientSocket.sendto(message.encode('utf-8'),('', serverPort))

@@ -13,7 +13,7 @@ serverSocket_TCP_Master = socket(AF_INET, SOCK_STREAM)
 ip = gethostbyname(gethostname())
 print(ip)
 serverSocket_TCP_Master.bind((ip,serverPort))
-serverSocket_TCP_Master.listen(5)
+serverSocket_TCP_Master.listen(1)
 
 
 clients_group1 = defaultdict(list)
@@ -25,7 +25,7 @@ def start_server():
     print("Server started, listening on IP address 172.1.0.4")
     stop_game = False
     start_time = time.time()
-    while time.time() - start_time < 10:
+    while time.time() - start_time < 20:
         offer_UDP_connection()
     game()
 
