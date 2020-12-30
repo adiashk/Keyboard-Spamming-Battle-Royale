@@ -6,6 +6,7 @@ from collections import defaultdict
 import struct
 # from scapy.arch import get_if_addr
 serverPort = 13006
+server_tcp_port = 12000
 serverSocket_UDP = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)
 # serverSocket_UDP.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
 serverSocket_UDP.setsockopt(SOL_SOCKET, SO_BROADCAST, 1)
@@ -17,17 +18,16 @@ serverSocket_TCP_Master = socket(AF_INET, SOCK_STREAM)
 # server_ip = '127.0.0.1'
 server_ip = gethostbyname(gethostname())
 
-serverSocket_TCP_Master.bind((server_ip,serverPort))
+serverSocket_TCP_Master.bind((server_ip,server_tcp_port))
 
 
 clients_group1 = defaultdict(list)
 clients_group2 = defaultdict(list)
-groups_counter = 0
 stop_game = False
-server_tcp_port = 12000
 num_of_threads = []
-
+groups_counter = 0
 def start_server():
+    groups_counter = 0
     print("Server started, listening on IP address 172.1.0.4")
     stop_game = True
     connection = False
@@ -35,15 +35,12 @@ def start_server():
     # while time.time() - start_time < 10:
             # offer_UDP_connection()
     start_time = time.time()
-    while stop_game:    
-        while time.time() - start_time < 10:
-            if not connection:
-                connection = True
-                _thread.start_new_thread ( offer_UDP_connection, (start_time,))
-                _thread.start_new_thread ( TCP_connection, (start_time,))
+    while time.time() - start_time < 10:
+        if not connection:
+            connection = True
+            _thread.start_new_thread ( offer_UDP_connection, (start_time,))
+            _thread.start_new_thread(TCP_connection, (start_time, groups_counter,))
 
-    # offer_UDP_connection()
-    # TCP_connection()
     game()
 
 
@@ -59,7 +56,7 @@ def offer_UDP_connection(start_time):
         # TCP_connection()
 
 
-def TCP_connection(start_time):
+def TCP_connection(start_time, groups_counter):
     # start_time = time.time()
     while time.time() - start_time < 10:
         serverSocket_TCP_Master.listen()
@@ -68,9 +65,9 @@ def TCP_connection(start_time):
         team_name = connection_socket.recv(1024)
         groups_counter += 1
         if groups_counter % 2 == 1:
-            clients_group1[team_name].append(0, connection_socket, client_addr) # score=0
+            clients_group1[team_name].append(([0, connection_socket, client_addr])) # score=0
         else:
-            clients_group2[team_name].append(0, connection_socket, client_addr) # score=0
+            clients_group2[team_name].append(([0, connection_socket, client_addr])) # score=0
 
 def game():
     print_game_start()
