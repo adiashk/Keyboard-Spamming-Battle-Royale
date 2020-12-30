@@ -1,6 +1,6 @@
 from socket import *
 serverName = ""
-serverPort = 12000
+serverPort = 12002
 clientSocket = socket(AF_INET, SOCK_STREAM)
 ip = gethostbyname(gethostname())
 clientSocket.connect((ip,serverPort))

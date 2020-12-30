@@ -1,5 +1,5 @@
 from socket import *
-serverPort = 12000
+serverPort = 12002
 serverSocket = socket(AF_INET, SOCK_STREAM)
 ip = gethostbyname(gethostname())
 print(ip)
