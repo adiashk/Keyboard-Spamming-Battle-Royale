@@ -4,72 +4,65 @@ import _thread
 import time
 from collections import defaultdict 
 import struct
-from scapy.arch import get_if_addr
+# from scapy.arch import get_if_addr
 serverPort = 13006
 serverSocket_UDP = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)
-serverSocket_UDP.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+# serverSocket_UDP.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
 serverSocket_UDP.setsockopt(SOL_SOCKET, SO_BROADCAST, 1)
 
 serverSocket_TCP_Master = socket(AF_INET, SOCK_STREAM)
 # ip = gethostbyname(gethostname())
 # print(ip)
-server_ip = get_if_addr('eth1')
+# server_ip = get_if_addr('eth1')
+# server_ip = '127.0.0.1'
+server_ip = gethostbyname(gethostname())
 
 serverSocket_TCP_Master.bind((server_ip,serverPort))
-serverSocket_TCP_Master.listen(1)
 
 
 clients_group1 = defaultdict(list)
 clients_group2 = defaultdict(list)
 groups_counter = 0
 stop_game = False
-server_tcp_port = 2008
+server_tcp_port = 12000
 num_of_threads = []
 
 def start_server():
     print("Server started, listening on IP address 172.1.0.4")
     stop_game = True
+    connection = False
     # start_time = time.time()
     # while time.time() - start_time < 10:
             # offer_UDP_connection()
-    # while stop_game:            
-    #     _thread.start_new_thread ( offer_UDP_connection, ())
-    #     _thread.start_new_thread ( TCP_connection, ())
-    try:
-        num_of_threads.append(1)
-        _thread.start_new_thread(offer_UDP_connection, ())
-    except Exception as err:
-        print(err)
-    try:
-        num_of_threads.append(1)
-        _thread.start_new_thread(TCP_connection, ())
-    except Exception as err:
-        print(err)
-    while len(num_of_threads) > 0:
-        pass
+    start_time = time.time()
+    while stop_game:    
+        while time.time() - start_time < 10:
+            if not connection:
+                connection = True
+                _thread.start_new_thread ( offer_UDP_connection, (start_time,))
+                _thread.start_new_thread ( TCP_connection, (start_time,))
 
     # offer_UDP_connection()
     # TCP_connection()
     game()
 
 
-def offer_UDP_connection():
+def offer_UDP_connection(start_time):
     # message = "0xfeedbeef" + "0x2" + "12000"
-    start_time = time.time()
+    # start_time = time.time()
     while time.time() - start_time < 10:
         message = struct.pack('QQQ',0xfeedbeef ,0x2, server_tcp_port)
         # threading.Timer(1.0, offer_UDP_connection).start()
         serverSocket_UDP.sendto(message, ('<broadcast>', serverPort))
-        print("udp")
+        # print("udp")
         time.sleep(1)
         # TCP_connection()
-    num_of_threads.pop()
 
 
-def TCP_connection():
-    start_time = time.time()
+def TCP_connection(start_time):
+    # start_time = time.time()
     while time.time() - start_time < 10:
-        print("tcp1")
+        serverSocket_TCP_Master.listen()
         connection_socket, client_addr = serverSocket_TCP_Master.accept()
         print("tcp2")
         team_name = connection_socket.recv(1024)
@@ -78,7 +71,6 @@ def TCP_connection():
             clients_group1[team_name].append(0, connection_socket, client_addr) # score=0
         else:
             clients_group2[team_name].append(0, connection_socket, client_addr) # score=0
-    num_of_threads.pop()
 
 def game():
     print_game_start()

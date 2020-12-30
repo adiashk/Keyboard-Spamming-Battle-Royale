@@ -30,7 +30,7 @@ def TCP_connection(message, serverAddress, team_name):
     clientSocket = socket(AF_INET, SOCK_STREAM)
     # ip = gethostbyname(gethostname())
     print(ip)
-    clientSocket.connect(('172.0.1.8', 2008))
+    clientSocket.connect((ip, serverPort))
     clientSocket.send(team_name.encode('utf-8'))
     while True: # receive welcome message
         open_game_massage = clientSocket.recv(1024).decode()
