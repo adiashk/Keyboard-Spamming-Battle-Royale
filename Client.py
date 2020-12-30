@@ -1,7 +1,7 @@
 from socket import *
 import struct
 # import getch
-# team_name = "yuval_adi"
+import keyboard
 
 def UDP_connection():
     clientSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)
@@ -17,12 +17,8 @@ def UDP_connection():
             print(str(unpacked_message[0])) 
             if unpacked_message[0] == 4276993775:   
                 clientSocket.close()    
-                print("aaa")    
-                server_tcp_port = unpacked_message[2]   
-                (ip, port) = serverAddress  
-                print(server_tcp_port)  
-                print(ip)   
-                ip ='172.1.0.94'    
+                server_tcp_port = unpacked_message[2]
+                (ip, port) = serverAddress
                 return ip, server_tcp_port  
         except:
             continue
@@ -30,9 +26,6 @@ def UDP_connection():
 
 def TCP_connection(ip, server_tcp_port):
     print("Received offer from ", ip, " attempting to connect...")
-    # server_tcp_port = message[13:].decode('utf-8')
-    # message_content = struct.unpack('Ibh', message)
-    # server_tcp_port = message_content[2]
     clientSocket = socket(AF_INET, SOCK_STREAM)
     clientSocket.connect((ip, server_tcp_port))
     team_name = input("enter name:")
@@ -44,26 +37,32 @@ def TCP_connection(ip, server_tcp_port):
             break
     # GAME!
     while True:  # read and then write to socket
-        stop_mssage = ''
-        try:
-            stop_mssage = clientSocket.recv(1024).decode()
-            print(stop_mssage)
-
-        except:
-            # char = getch.getche()
-            char = 'a'
-            # char = msvcrt.getche()
-            print(char)
-            clientSocket.send(char.encode('utf-8'))
-
-            # with Input(keynames="curtsies", sigint_event=True) as input_generator:
-            #     key = input_generator.send(0.1)
-            #     if key:
-            #         print(key)
-            #         clientSocket.send((key + '\n').encode('utf-8'))
-            if stop_mssage == "game over":
-                print(stop_mssage)
+        # stop_message = ''
+        # try:
+            stop_message = clientSocket.recv(1024).decode()
+            # print(stop_message)
+            # if key:
+            #     send_key = bytes(key, 'utf-8')
+            #     clientSocket.sendall(send_key)
+            if stop_message == "true":
+                # print(stop_message)
                 break
+
+
+        # except:
+            # char = getch.getche()
+            # char = input("enter name:")
+            # # char = msvcrt.getche()
+            # print(char)
+            # clientSocket.send(char.encode('utf-8'))
+
+            key = keyboard.read_key()
+            if key:
+                send_key = bytes(key, 'utf-8')
+                clientSocket.sendall(send_key)
+            # if stop_message == "game over":
+            #     print(stop_message)
+            #     break
 
     # clientSocket.close()
 

@@ -4,7 +4,7 @@ import _thread
 import time
 from collections import defaultdict 
 import struct
-from scapy.arch import get_if_addr
+# from scapy.arch import get_if_addr
 serverPort = 13117
 server_tcp_port = 2094
 serverSocket_UDP = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)
@@ -14,9 +14,9 @@ serverSocket_UDP.setsockopt(SOL_SOCKET, SO_BROADCAST, 1)
 serverSocket_TCP_Master = socket(AF_INET, SOCK_STREAM)
 # ip = gethostbyname(gethostname())
 # print(ip)
-server_ip = get_if_addr('eth1')
+# server_ip = get_if_addr('eth1')
 # server_ip = '127.0.0.1'
-# server_ip = gethostbyname(gethostname())
+server_ip = gethostbyname(gethostname())
 
 serverSocket_TCP_Master.bind((server_ip,server_tcp_port))
 
@@ -25,39 +25,37 @@ clients_group1 = defaultdict(list)
 clients_group2 = defaultdict(list)
 stop_game = False
 num_of_threads = []
+
 def start_server():
-    print("Server started, listening on IP address ", server_ip)
+    print( "Server started, listening on IP address ", server_ip)
     connection = False
     # start_time = time.time()
     # while time.time() - start_time < 10:
             # offer_UDP_connection()
     start_time = time.time()
-    while time.time() - start_time < 20:
+    while time.time() - start_time < 10:
         if not connection:
             connection = True
             _thread.start_new_thread ( offer_UDP_connection, (start_time,))
             _thread.start_new_thread(TCP_connection, (start_time,))
-
     game()
 
 
 def offer_UDP_connection(start_time):
-    # message = "0xfeedbeef" + "0x2" + "12000"
-    # start_time = time.time()
-    while time.time() - start_time < 20:
-        message = struct.pack('QQQ',0xfeedbeef ,0x2, server_tcp_port)
-        # threading.Timer(1.0, offer_UDP_connection).start()
-        # serverSocket_UDP.sendto(message, ('<broadcast>', serverPort))
+    while time.time() - start_time < 10:
+        magic_cookie = 0xfeedbeef
+        message_type= 0x2
+        message = struct.pack('QQQ', magic_cookie, message_type,server_tcp_port)
         serverSocket_UDP.sendto(message, ('<broadcast>', serverPort))
         time.sleep(1)
 
 
 def TCP_connection(start_time):
-    # start_time = time.time()
-    while time.time() - start_time < 20:
+    while time.time() - start_time < 10:
         serverSocket_TCP_Master.listen()
         connection_socket, client_addr = serverSocket_TCP_Master.accept()
-        print("tcp2")
+        # print(connection_socket)
+
         team_name = connection_socket.recv(1024)
         if len(clients_group1) == len(clients_group2):
             clients_group1[team_name] = [0, connection_socket, client_addr] # score=0
@@ -112,15 +110,21 @@ def print_game_start():
 
 def game_of_client(team_name, group_num, connection_socket, client_addr):
     while not stop_game:
-        key = connection_socket.recv(1)
-        print(key)
+    # start_time = time.time()
+    # while time.time() - start_time < 10:
+        connection_socket.send(str(stop_game).encode('utf-8'))
+        key = connection_socket.recv(1024)
+        # print(key)
         if group_num == 1:
             clients_group1[team_name][0] += 1
+            # print(group_num)
         elif group_num == 2:
             clients_group2[team_name][0] += 1
+            # print(group_num)
     print("Server disconnected, listening for offer requests...")
-    stop_mssage = "game over"
-    connection_socket.send(stop_mssage.encode('utf-8'))
+    stop_message = "game over"
+    connection_socket.send(stop_message.encode('utf-8'))
+
     # connection_socket.close()
 
 def calculate_score():
@@ -132,11 +136,10 @@ def calculate_score():
         score2 += client[0]
     return score1, score2
 
-print("start")
-start_server()
+while True:
+    # print("start")
+    start_server()
 # serverSocket_UDP.close()
 # serverSocket_TCP_Master.close()
 
-# magic_cookie = 0xfeedbeef
-# message_type= 0x2
-# message = struct.pack('bbb', magic_cookie, message_type,localPort)
+
