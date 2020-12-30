@@ -25,21 +25,18 @@ clients_group1 = defaultdict(list)
 clients_group2 = defaultdict(list)
 stop_game = False
 num_of_threads = []
-groups_counter = 0
 def start_server():
-    groups_counter = 0
-    print("Server started, listening on IP address 172.1.0.4")
-    stop_game = True
+    print("Server started, listening on IP address ", server_ip)
     connection = False
     # start_time = time.time()
     # while time.time() - start_time < 10:
             # offer_UDP_connection()
     start_time = time.time()
-    while time.time() - start_time < 10:
+    while time.time() - start_time < 20:
         if not connection:
             connection = True
             _thread.start_new_thread ( offer_UDP_connection, (start_time,))
-            _thread.start_new_thread(TCP_connection, (start_time, groups_counter,))
+            _thread.start_new_thread(TCP_connection, (start_time,))
 
     game()
 
@@ -47,27 +44,24 @@ def start_server():
 def offer_UDP_connection(start_time):
     # message = "0xfeedbeef" + "0x2" + "12000"
     # start_time = time.time()
-    while time.time() - start_time < 10:
+    while time.time() - start_time < 20:
         message = struct.pack('QQQ',0xfeedbeef ,0x2, server_tcp_port)
         # threading.Timer(1.0, offer_UDP_connection).start()
         serverSocket_UDP.sendto(message, ('<broadcast>', serverPort))
-        # print("udp")
         time.sleep(1)
-        # TCP_connection()
 
 
-def TCP_connection(start_time, groups_counter):
+def TCP_connection(start_time):
     # start_time = time.time()
-    while time.time() - start_time < 10:
+    while time.time() - start_time < 20:
         serverSocket_TCP_Master.listen()
         connection_socket, client_addr = serverSocket_TCP_Master.accept()
         print("tcp2")
         team_name = connection_socket.recv(1024)
-        groups_counter += 1
-        if groups_counter % 2 == 1:
-            clients_group1[team_name].append(([0, connection_socket, client_addr])) # score=0
+        if len(clients_group1) == len(clients_group2):
+            clients_group1[team_name] = [0, connection_socket, client_addr] # score=0
         else:
-            clients_group2[team_name].append(([0, connection_socket, client_addr])) # score=0
+            clients_group2[team_name] = [0, connection_socket, client_addr] # score=0
 
 def game():
     print_game_start()
@@ -117,16 +111,19 @@ def print_game_start():
 
 def game_of_client(team_name, group_num, connection_socket, client_addr):
     while not stop_game:
-        key = connection_socket.recv(1)
+        key = connection_socket.recv(1024)
         if group_num == 1:
             clients_group1[team_name][0] += 1
         elif group_num == 2:
             clients_group2[team_name][0] += 1
     print("Server disconnected, listening for offer requests...")
-    connection_socket.close()
+    stop_mssage = "game over"
+    connection_socket.send(stop_mssage.encode('utf-8'))
+    # connection_socket.close()
 
 def calculate_score():
-    score1, score2 = 0
+    score1 = 0
+    score2 = 0
     for team_name, client in clients_group1.items():  # (score, connection_socket, client_addr)
         score1 += client[0]
     for team_name, client in clients_group2.items():
@@ -135,8 +132,8 @@ def calculate_score():
 
 print("start")
 start_server()
-serverSocket_UDP.close()
-serverSocket_TCP_Master.close()
+# serverSocket_UDP.close()
+# serverSocket_TCP_Master.close()
 
 # magic_cookie = 0xfeedbeef
 # message_type= 0x2
