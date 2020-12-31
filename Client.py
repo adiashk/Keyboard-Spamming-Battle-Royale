@@ -4,6 +4,9 @@ import struct
 import keyboard
 
 def UDP_connection():
+    """
+    :return: ip of the server and tcp port of server
+    """
     clientSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)
     clientSocket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
     clientSocket.setsockopt(SOL_SOCKET, SO_BROADCAST, 1)
@@ -25,6 +28,11 @@ def UDP_connection():
 
 
 def TCP_connection(ip, server_tcp_port):
+    """
+    :param ip: ip of the server
+    :param server_tcp_port: tcp port of server
+    :return: brake when server crash
+    """
     print("Received offer from ", ip, " attempting to connect...")
     clientSocket = socket(AF_INET, SOCK_STREAM)
     clientSocket.connect((ip, server_tcp_port))
@@ -35,8 +43,10 @@ def TCP_connection(ip, server_tcp_port):
         if open_game_massage:
             print(open_game_massage)
             break
-    # GAME!
-    while True:  # read and then write to socket
+    """
+    game: read key and then write to socket
+    """
+    while True:
         # stop_message = ''
         # try:
             stop_message = clientSocket.recv(1024).decode()
@@ -58,7 +68,10 @@ def TCP_connection(ip, server_tcp_port):
             key = keyboard.read_key()
             if key:
                 send_key = bytes(key, 'utf-8')
-                clientSocket.sendall(send_key)
+                try:
+                    clientSocket.sendall(send_key)
+                except:
+                    break  # back to udp connection
             # if stop_message == "game over":
             #     print(stop_message)
             #     break

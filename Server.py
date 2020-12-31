@@ -1,5 +1,4 @@
 from socket import *
-import threading
 import _thread
 import time
 from collections import defaultdict 
@@ -8,59 +7,68 @@ import struct
 serverPort = 13117
 server_tcp_port = 2094
 serverSocket_UDP = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)
-# serverSocket_UDP.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
 serverSocket_UDP.setsockopt(SOL_SOCKET, SO_BROADCAST, 1)
 
 serverSocket_TCP_Master = socket(AF_INET, SOCK_STREAM)
 # server_ip = get_if_addr('eth1')
-# server_ip = '127.0.0.1'
 server_ip = gethostbyname(gethostname())
-
 serverSocket_TCP_Master.bind((server_ip,server_tcp_port))
-
+magic_cookie = 0xfeedbeef
+message_type = 0x2
 
 clients_group1 = defaultdict(list)
 clients_group2 = defaultdict(list)
 stop_game = False
 num_of_threads = []
+connection_time = 10
+game_time = 10
 
 def start_server():
-    print( "Server started, listening on IP address ", server_ip)
+    print("Server started, listening on IP address ", server_ip)
     connection = False
-    # start_time = time.time()
-    # while time.time() - start_time < 10:
-            # offer_UDP_connection()
     start_time = time.time()
-    while time.time() - start_time < 10:
+    while time.time() - start_time < connection_time:
         if not connection:
             connection = True
-            _thread.start_new_thread ( offer_UDP_connection, (start_time,))
+            _thread.start_new_thread(offer_UDP_connection, (start_time,))
             _thread.start_new_thread(TCP_connection, (start_time,))
     game()
 
 
 def offer_UDP_connection(start_time):
-    while time.time() - start_time < 10:
-        magic_cookie = 0xfeedbeef
-        message_type= 0x2
+    """
+    send broadcast to get udp connection
+    :param start_time: when the connection open
+    :return: finish after the given time
+    """
+    while time.time() - start_time < connection_time:
         message = struct.pack('QQQ', magic_cookie, message_type,server_tcp_port)
         serverSocket_UDP.sendto(message, ('<broadcast>', serverPort))
-        time.sleep(1)
+        time.sleep(1)  # send offer every second
 
 
 def TCP_connection(start_time):
-    while time.time() - start_time < 10:
+    """
+    do tcp connection, get connection_socket and save it for each client
+    :param start_time: when the connection open
+    :return: finish after the given time
+    """
+    while time.time() - start_time < connection_time:
         serverSocket_TCP_Master.listen()
         connection_socket, client_addr = serverSocket_TCP_Master.accept()
-        # print(connection_socket)
 
         team_name = connection_socket.recv(1024).decode('utf-8')
         if len(clients_group1) == len(clients_group2):
-            clients_group1[team_name] = [0, connection_socket, client_addr] # score=0
+            clients_group1[team_name] = [0, connection_socket, client_addr]  # start_score=0
         else:
-            clients_group2[team_name] = [0, connection_socket, client_addr] # score=0
+            clients_group2[team_name] = [0, connection_socket, client_addr]  # start_score=0
 
 def game():
+    """
+    start the game and send message to the clients, each client get thread that start the game
+    print the score in the end
+    :return:
+    """
     print_game_start()
     open_game_massage = "Start pressing keys on your keyboard as fast as you can!!"
     for team_name, client in clients_group1.items():  # (score, connection_socket, client_addr)
@@ -73,9 +81,9 @@ def game():
         connection_socket = client[1]
         client_addr = client[2]
         connection_socket.send(open_game_massage.encode('utf-8'))
-        _thread.start_new_thread ( game_of_client, (team_name, 2, connection_socket, client_addr))
+        _thread.start_new_thread(game_of_client, (team_name, 2, connection_socket, client_addr))
 
-    time.sleep(10)
+    time.sleep(game_time)
     stop_game = True
     print("Game over!")
     score1, score2 = calculate_score()
@@ -107,9 +115,15 @@ def print_game_start():
         print(name)
 
 def game_of_client(team_name, group_num, connection_socket, client_addr):
+    """
+    each client has separate thread- this is his game
+    :param team_name: the name the client gave
+    :param group_num: 1 or 2
+    :param connection_socket: the client socket
+    :param client_addr: the client address
+    :return:
+    """
     while not stop_game:
-    # start_time = time.time()
-    # while time.time() - start_time < 10:
         connection_socket.send(str(stop_game).encode('utf-8'))
         key = connection_socket.recv(1024)
         # print(key)
@@ -126,6 +140,9 @@ def game_of_client(team_name, group_num, connection_socket, client_addr):
     # connection_socket.close()
 
 def calculate_score():
+    """
+    :return: score of each group
+    """
     score1 = 0
     score2 = 0
     for team_name, client in clients_group1.items():  # (score, connection_socket, client_addr)
