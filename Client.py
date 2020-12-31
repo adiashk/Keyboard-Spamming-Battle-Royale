@@ -2,7 +2,7 @@ from socket import *
 import struct
 # import getch
 import keyboard
-
+message_code = 4276993775
 def UDP_connection():
     """
     :return: ip of the server and tcp port of server
@@ -18,7 +18,7 @@ def UDP_connection():
             message, serverAddress = clientSocket.recvfrom(1024)    
             unpacked_message = struct.unpack('QQQ', message)    
             # print(str(unpacked_message[0]))
-            if unpacked_message[0] == 4276993775:   
+            if unpacked_message[0] == message_code:
                 clientSocket.close()    
                 server_tcp_port = unpacked_message[2]
                 (ip, port) = serverAddress
